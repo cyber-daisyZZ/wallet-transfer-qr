@@ -1,3 +1,4 @@
+import AutoTransfer from "@/views/auto-transfer";
 import Link from "next/link";
 
 export default function AutoTransferPage() {
@@ -19,10 +20,7 @@ export default function AutoTransferPage() {
           </h1>
 
           <div className="text-gray-600 dark:text-gray-300">
-            <p className="mb-4">
-              这是自动转账页面的占位内容。后续将根据业务需求添加具体的自动转账功能。
-            </p>
-            <p>您可以在这里设置自动转账规则、管理转账计划等。</p>
+            <AutoTransfer />
           </div>
         </div>
       </div>
