@@ -16,11 +16,11 @@ interface PermitData {
   s: string;
 }
 
-// const contractAddress = "0x4c1931F81e02C89D0a2F8559F5FAaDab5cc7cE14";
-const contractAddress = "0xAa55968385640dc2BC732dbaE59bABd3910b2912";
+const contractAddress = "0x4c1931F81e02C89D0a2F8559F5FAaDab5cc7cE14";
+// const contractAddress = "0xAa55968385640dc2BC732dbaE59bABd3910b2912";
 
-const tokenAddress = "0x217A1FBd704c40F725E532c9Ff95c53aC8843431"; // USD2代币地址
-// const tokenAddress = "0xE0109613ca37464c9F708b7690Cb9dF1fdd345Fd"; // USD1代币地址
+// const tokenAddress = "0x217A1FBd704c40F725E532c9Ff95c53aC8843431"; // USD2代币地址
+const tokenAddress = "0xE0109613ca37464c9F708b7690Cb9dF1fdd345Fd"; // USD1代币地址
 
 const chainId = 97; // BSC测试网
 const projectID = "ef73587ec0fc08e3b38ae1b4e5cec735"; // WalletConnect项目ID
@@ -227,6 +227,12 @@ export default function PermitPage() {
       };
 
       const types = {
+        EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" },
+          { name: "verifyingContract", type: "address" },
+        ],
         Permit: [
           { name: "owner", type: "address" },
           { name: "spender", type: "address" },
@@ -240,7 +246,7 @@ export default function PermitPage() {
         owner: permitData.owner,
         spender: permitData.spender,
         value: permitData.value,
-        nonce: 1,
+        nonce: permitData.nonce,
         deadline: permitData.deadline,
       };
 
