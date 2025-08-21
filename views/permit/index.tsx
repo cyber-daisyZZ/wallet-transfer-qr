@@ -28,7 +28,7 @@ export default function PermitPage() {
   const [qrCodeData, setQrCodeData] = useState<string>("");
   const [status, setStatus] = useState<string>("准备生成USD1授权QR码...");
   const [userAddress, setUserAddress] = useState<string>("");
-  const [amount, setAmount] = useState<string>("1"); // 1 USD1
+  const [amount, setAmount] = useState<string>("0"); // 1 USD1
   const [signClient, setSignClient] = useState<WalletConnectSignClient | null>(
     null
   );
@@ -327,11 +327,17 @@ export default function PermitPage() {
       return;
     }
 
+    if (!userAddress) {
+      setStatus("请先连接钱包获取用户地址");
+      return;
+    }
+
     try {
       setStatus("正在调用合约depositWithPermit方法...");
 
       // 构造合约调用参数
       const contractCallParams = {
+        from: userAddress, // 发送方地址（当前连接的钱包地址）
         to: ethers.getAddress(contractAddress), // 目标合约地址（格式化）
         data: encodeDepositWithPermitData(), // 编码后的函数调用数据
         value: "0x0", // 不发送ETH，只调用合约方法
@@ -340,6 +346,8 @@ export default function PermitPage() {
       };
 
       console.log("合约调用参数:", contractCallParams);
+      console.log("用户地址:", userAddress);
+      console.log("合约地址:", contractAddress);
 
       // 通过WalletConnect发送交易
       const result = await signClient.request({
@@ -362,9 +370,9 @@ export default function PermitPage() {
         method: "depositWithPermit",
         transactionHash: result,
         permit: permitData,
-        description: `depositWithPermit调用成功\n交易哈希: ${result}\n金额: ${parseInt(
-          permitData.value
-        )} USD1`,
+        description: `depositWithPermit调用成功\n交易哈希: ${result}\n金额: ${
+          parseInt(permitData.value) / 1e18
+        } USD1`,
       };
 
       setQrCodeData(JSON.stringify(successQRData));
@@ -392,7 +400,7 @@ export default function PermitPage() {
 
     console.log([
       formattedTokenAddress, // token
-      (parseInt(permitData.value) * 1e18).toString(), // amount (转换为wei)
+      parseInt(permitData.value).toString(), // amount (转换为wei)
       permitData.deadline, // deadline
       permitData.v, // v
       permitData.r, // r
@@ -494,9 +502,11 @@ export default function PermitPage() {
                 </label>
                 <input
                   type="text"
-                  value={parseInt(amount)}
+                  value={parseInt(amount) / 1e18}
                   onChange={(e) =>
-                    setAmount(parseFloat(e.target.value || "0").toString())
+                    setAmount(
+                      (parseFloat(e.target.value || "0") * 1e18).toString()
+                    )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="1.0"
@@ -605,7 +615,7 @@ export default function PermitPage() {
                   </div>
                   <div>
                     <span className="font-medium">授权金额:</span>{" "}
-                    {parseInt(permitData.value)} USD1
+                    {parseInt(permitData.value) / 1e18} USD1
                   </div>
                   <div>
                     <span className="font-medium">过期时间:</span>{" "}
