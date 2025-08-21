@@ -16,9 +16,11 @@ interface PermitData {
   s: string;
 }
 
-const contractAddress = "0x4c1931F81e02C89D0a2F8559F5FAaDab5cc7cE14";
-// const tokenAddress = "0xE0109613ca37464c9F708b7690C9dF1fdd345Fd"; // USD1代币地址
-const tokenAddress = "0xE0109613ca37464c9F708b7690Cb9dF1fdd345Fd"; // USD1代币地址
+// const contractAddress = "0x4c1931F81e02C89D0a2F8559F5FAaDab5cc7cE14";
+const contractAddress = "0xAa55968385640dc2BC732dbaE59bABd3910b2912";
+
+const tokenAddress = "0x217A1FBd704c40F725E532c9Ff95c53aC8843431"; // USD2代币地址
+// const tokenAddress = "0xE0109613ca37464c9F708b7690Cb9dF1fdd345Fd"; // USD1代币地址
 
 const chainId = 97; // BSC测试网
 const projectID = "ef73587ec0fc08e3b38ae1b4e5cec735"; // WalletConnect项目ID
@@ -136,16 +138,16 @@ export default function PermitPage() {
       // 构造EIP-2612标准的permit消息
       const deadline = Math.floor(Date.now() / 1000) + 3600; // 1小时后过期
 
-      // 注意：这里需要从代币合约获取实际的nonce值
-      // 为了演示，我们使用一个示例值
-      const nonce = 0; // 实际使用时需要从合约获取
+      // 从代币合约获取当前nonce值
+      const nonce = await getCurrentNonce(userAddress);
+      console.log("当前nonce值:", nonce);
 
       const permitMessage = {
         owner: userAddress,
         spender: contractAddress,
         value: amount,
+        nonce: nonce + 1,
         deadline: deadline,
-        nonce: nonce,
       };
 
       setStatus("permit消息已生成，请使用钱包签名...");
@@ -163,8 +165,8 @@ export default function PermitPage() {
           { name: "owner", type: "address" },
           { name: "spender", type: "address" },
           { name: "value", type: "uint256" },
-          { name: "nonce", type: "uint256" },
           { name: "deadline", type: "uint256" },
+          { name: "nonce", type: "uint256" },
         ],
       };
 
@@ -238,7 +240,7 @@ export default function PermitPage() {
         owner: permitData.owner,
         spender: permitData.spender,
         value: permitData.value,
-        nonce: permitData.nonce,
+        nonce: 1,
         deadline: permitData.deadline,
       };
 
@@ -247,6 +249,11 @@ export default function PermitPage() {
       const result = await signClient.request({
         topic: sessionTopic,
         chainId: `eip155:${chainId}`,
+        // request: {
+        //   method: "eth_signTypedData",
+        //   params: [domain, types, message],
+        // },
+
         request: {
           method: "eth_signTypedData_v4",
           params: [
@@ -341,7 +348,7 @@ export default function PermitPage() {
         to: ethers.getAddress(contractAddress), // 目标合约地址（格式化）
         data: encodeDepositWithPermitData(), // 编码后的函数调用数据
         value: "0x0", // 不发送ETH，只调用合约方法
-        gas: "0x186A0", // 预估gas限制 (100,000)
+        gas: "0x6686A0", // 预估gas限制 (100,000)
         gasPrice: "0x3B9ACA00", // 1 Gwei
       };
 
@@ -380,6 +387,55 @@ export default function PermitPage() {
       console.error("合约调用失败:", error);
       const errorMessage = error instanceof Error ? error.message : "未知错误";
       setStatus(`合约调用失败: ${errorMessage}`);
+    }
+  };
+
+  // 获取代币合约的当前nonce值
+  const getCurrentNonce = async (ownerAddress: string) => {
+    try {
+      // 构造nonces函数调用数据
+      const noncesFunctionSignature = "nonces(address)";
+      const noncesFunctionSelector = keccak256(
+        toUtf8Bytes(noncesFunctionSignature)
+      ).slice(0, 10);
+
+      // 编码参数
+      const encodedParams = AbiCoder.defaultAbiCoder().encode(
+        ["address"],
+        [ownerAddress]
+      );
+
+      const callData = noncesFunctionSelector + encodedParams.slice(2);
+
+      // 通过WalletConnect调用合约的nonces函数
+      if (signClient && sessionTopic) {
+        const result = await signClient.request({
+          topic: sessionTopic,
+          chainId: `eip155:${chainId}`,
+          request: {
+            method: "eth_call",
+            params: [
+              {
+                to: tokenAddress,
+                data: callData,
+              },
+              "latest", // block number
+            ],
+          },
+        });
+
+        // 解析返回的nonce值
+        const nonce = parseInt(result as string, 16);
+        console.log("从合约获取的nonce:", nonce);
+        return nonce;
+      }
+
+      // 如果WalletConnect不可用，返回默认值
+      return 0;
+    } catch (error) {
+      console.error("获取nonce失败:", error);
+      // 返回默认值，避免阻塞流程
+      return 0;
     }
   };
 
@@ -436,7 +492,7 @@ export default function PermitPage() {
 
   return (
     <div className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-11xl mx-auto">
         <div className="mb-8">
           <a
             href="/"
@@ -631,12 +687,12 @@ export default function PermitPage() {
                         <span className="font-medium">V:</span> {permitData.v}
                       </div>
                       <div>
-                        <span className="font-medium">R:</span>{" "}
-                        {permitData.r.slice(0, 10)}...
+                        <span className="font-medium">R:</span> {permitData.r}
+                        ...
                       </div>
                       <div>
-                        <span className="font-medium">S:</span>{" "}
-                        {permitData.s.slice(0, 10)}...
+                        <span className="font-medium">S:</span> {permitData.s}
+                        ...
                       </div>
                     </>
                   )}
@@ -657,6 +713,8 @@ export default function PermitPage() {
                 <li>• 生成包含v, r, s签名的最终QR码</li>
                 <li>• 生成调用depositWithPermit方法的合约调用QR码</li>
                 <li>• 合约自动执行USD1授权和转账</li>
+                <span className="font-medium">R:</span> {permitData?.r}
+                <span className="font-medium">S:</span> {permitData?.s}
               </ul>
             </div>
           </div>
