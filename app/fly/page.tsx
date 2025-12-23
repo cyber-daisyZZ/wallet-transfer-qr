@@ -2,6 +2,75 @@
 import Image from "next/image";
 import { useState } from "react";
 
+// 定义可编辑字段的类型
+type EditableField =
+  | "totalAmount"
+  | "refundAmount"
+  | "orderNumber"
+  | "flyDay"
+  | "flyStartTime"
+  | "flyEndTime"
+  | "flyFrom"
+  | "flyTo";
+
+// 字段配置
+const fieldConfig: Record<
+  EditableField,
+  { label: string; type: "number" | "text" | "date" | "datetime" }
+> = {
+  totalAmount: { label: "总价", type: "text" },
+  refundAmount: { label: "退款金额", type: "text" },
+  orderNumber: { label: "订单号", type: "text" },
+  flyFrom: { label: "出发地", type: "text" },
+  flyTo: { label: "目的地", type: "text" },
+  flyDay: { label: "出发日期", type: "date" },
+  flyStartTime: { label: "出发时间", type: "datetime" },
+  flyEndTime: { label: "到达时间", type: "datetime" },
+};
+
+const readList = [
+  {
+    name: "乘机行李规定",
+  },
+  {
+    name: "24/240小时中国过境提醒",
+  },
+  {
+    name: "赴华提醒",
+  },
+  {
+    name: "文明乘机提醒",
+  },
+  {
+    name: "防诈骗提醒",
+  },
+  {
+    name: "出入境提醒",
+  },
+];
+const btnList = [
+  {
+    name: "退款进度",
+  },
+  {
+    name: "发票/行程单",
+  },
+  {
+    name: "再次预订",
+  },
+];
+const serviceList = [
+  {
+    name: "优选权益8选1",
+  },
+  {
+    name: "延误补偿服务",
+  },
+  {
+    name: "接送机70元券",
+  },
+];
+
 export default function FlyPage() {
   const [totalAmount, setTotalAmount] = useState(1140);
   const [refundAmount, setRefundAmount] = useState(552);
@@ -11,48 +80,95 @@ export default function FlyPage() {
   const [flyTo, setFlyTo] = useState("上海");
   const [flyStartTime, setFlyStartTime] = useState("04-22 20:05");
   const [flyEndTime, setFlyEndTime] = useState("04-23 01:35");
-  const readList = [
-    {
-      name: "乘机行李规定",
-    },
-    {
-      name: "24/240小时中国过境提醒",
-    },
-    {
-      name: "赴华提醒",
-    },
-    {
-      name: "文明乘机提醒",
-    },
-    {
-      name: "防诈骗提醒",
-    },
-    {
-      name: "出入境提醒",
-    },
-  ];
-  const btnList = [
-    {
-      name: "退款进度",
-    },
-    {
-      name: "发票/行程单",
-    },
-    {
-      name: "再次预订",
-    },
-  ];
-  const serviceList = [
-    {
-      name: "优选权益8选1",
-    },
-    {
-      name: "延误补偿服务",
-    },
-    {
-      name: "接送机70元券",
-    },
-  ];
+
+  // 编辑弹窗状态
+  const [editingField, setEditingField] = useState<EditableField | null>(null);
+  const [inputValue, setInputValue] = useState("");
+
+  const getFieldValue = (field: EditableField): string => {
+    const stateMap = {
+      totalAmount: totalAmount.toString(),
+      refundAmount: refundAmount.toString(),
+      orderNumber: orderNumber,
+      flyDay: flyDay,
+      flyStartTime: flyStartTime,
+      flyEndTime: flyEndTime,
+      flyFrom: flyFrom,
+      flyTo: flyTo,
+    };
+    return stateMap[field];
+  };
+
+  // 更新字段值
+  const updateFieldValue = (field: EditableField, value: string) => {
+    switch (field) {
+      case "totalAmount":
+        const total = parseInt(value, 10);
+        if (!isNaN(total) && total >= 0) setTotalAmount(total);
+        break;
+      case "refundAmount":
+        const refund = parseInt(value, 10);
+        if (!isNaN(refund) && refund >= 0) setRefundAmount(refund);
+        break;
+      case "orderNumber":
+        setOrderNumber(value);
+        break;
+      case "flyDay":
+        setFlyDay(value);
+        break;
+      case "flyStartTime":
+        setFlyStartTime(value);
+        break;
+      case "flyEndTime":
+        setFlyEndTime(value);
+        break;
+      case "flyFrom":
+        setFlyFrom(value);
+        break;
+      case "flyTo":
+        setFlyTo(value);
+        break;
+    }
+  };
+
+  // 打开编辑弹窗
+  const handleEdit = (field: EditableField) => {
+    setInputValue(getFieldValue(field));
+    setEditingField(field);
+  };
+
+  // 确认编辑
+  const handleConfirm = () => {
+    if (editingField) {
+      updateFieldValue(editingField, inputValue);
+      setEditingField(null);
+      setInputValue("");
+    }
+  };
+
+  // 取消编辑
+  const handleCancel = () => {
+    setEditingField(null);
+    setInputValue("");
+  };
+
+  // 可点击的编辑组件
+  const EditableText = ({
+    field,
+    children,
+    className = "",
+  }: {
+    field: EditableField;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <span
+      className={`cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity ${className}`}
+      onClick={() => handleEdit(field)}
+    >
+      {children}
+    </span>
+  );
   return (
     <div
       className="h-screen w-screen overflow-hidden bg-[#f0f2f5] text-white font-[var(--crn_font_fbu_orderdetail)]"
@@ -198,7 +314,12 @@ export default function FlyPage() {
               <div className="flex items-center">
                 <div className="text-[19px] leading-[23px] font-bold text-[#111] mr-1">
                   总计
-                  <span className="ml-2 text-[#006ff6]">¥{totalAmount}</span>
+                  <EditableText
+                    field="totalAmount"
+                    className="ml-2 text-[#006ff6]"
+                  >
+                    ¥{totalAmount}
+                  </EditableText>
                 </div>
                 <Image
                   src="/images/question.png"
@@ -229,16 +350,35 @@ export default function FlyPage() {
               </div>
             </div>
 
-            <div className="text-[12px] font-bold text-[#08a66f] py-1 mt-1">
+            <EditableText
+              field="refundAmount"
+              className="text-[12px] font-bold text-[#08a66f] py-1 mt-1"
+            >
               已退款 ¥{refundAmount}
-            </div>
+            </EditableText>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 py-1 leading-[15px]">
-                <span className="text-[12px] text-[#111]">
-                  订单号: {orderNumber}
+              <div className="flex items-center py-1 leading-[15px]">
+                <EditableText
+                  field="orderNumber"
+                  className="text-[12px] text-[#111] mr-2"
+                >
+                  订单号:{orderNumber}
+                </EditableText>
+                <svg
+                  viewBox="0 0 1024 1024"
+                  width="16"
+                  height="16"
+                  className="mb-[1px]"
+                >
+                  <path
+                    d="M768 682.666667V170.666667a85.333333 85.333333 0 0 0-85.333333-85.333334H170.666667a85.333333 85.333333 0 0 0-85.333334 85.333334v512a85.333333 85.333333 0 0 0 85.333334 85.333333h512a85.333333 85.333333 0 0 0 85.333333-85.333333zM170.666667 170.666667h512v512H170.666667z m682.666666 85.333333v512a85.333333 85.333333 0 0 1-85.333333 85.333333H256a85.333333 85.333333 0 0 0 85.333333 85.333334h426.666667a170.666667 170.666667 0 0 0 170.666667-170.666667V341.333333a85.333333 85.333333 0 0 0-85.333334-85.333333z"
+                    fill="#888888"
+                  ></path>
+                </svg>
+                <span className="text-[12px] text-[#888] h-4 ml-[1px]">
+                  复制
                 </span>
-                <span className="text-[12px] text-[#888] h-4">复制</span>
               </div>
             </div>
           </div>
@@ -251,8 +391,10 @@ export default function FlyPage() {
                   单程
                 </span>
                 <div className="flex flex-1 items-center text-[17px] leading-[20px] font-semibold text-[#111]">
-                  <span>{flyDay}</span>
-                  <span className="ml-1">{flyFrom}</span>
+                  <EditableText field="flyDay">{flyDay}</EditableText>
+                  <EditableText field="flyFrom" className="ml-1">
+                    {flyFrom}
+                  </EditableText>
                   <Image
                     src="/images/video_goods_icon_arrow.png"
                     alt="arrow-right"
@@ -260,7 +402,7 @@ export default function FlyPage() {
                     width={14}
                     height={18}
                   />
-                  <span>{flyTo}</span>
+                  <EditableText field="flyTo">{flyTo}</EditableText>
                 </div>
                 <div className="flex items-center text-[12px] text-[#111]">
                   <span>展开</span>
@@ -298,8 +440,9 @@ export default function FlyPage() {
               </div>
 
               <div className="text-xs font-semibold text-[#111] mt-2">
-                <span>{flyStartTime}</span> <span className="mx-1">至</span>{" "}
-                <span>{flyEndTime}</span>
+                <EditableText field="flyStartTime">{flyStartTime}</EditableText>
+                <span className="mx-1.5">至</span>
+                <EditableText field="flyEndTime">{flyEndTime}</EditableText>
               </div>
             </div>
 
@@ -470,6 +613,56 @@ export default function FlyPage() {
           </div>
         ))}
       </div>
+
+      {editingField && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={handleCancel}
+        >
+          <div
+            className="bg-white rounded-lg p-6 w-[80%] max-w-[400px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-lg font-semibold text-[#111] mb-4">
+              编辑{fieldConfig[editingField].label}
+            </div>
+            <input
+              type={
+                fieldConfig[editingField].type === "number" ? "number" : "text"
+              }
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={`请输入${fieldConfig[editingField].label}`}
+              className="w-full px-4 py-3 border border-[#e5e5e5] rounded-[4px] text-[#111] text-base mb-4 focus:outline-none focus:border-[#006ff6]"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleConfirm();
+                } else if (e.key === "Escape") {
+                  handleCancel();
+                }
+              }}
+              min={
+                fieldConfig[editingField].type === "number" ? "0" : undefined
+              }
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancel}
+                className="flex-1 py-3 px-4 border border-[#e5e5e5] rounded-[4px] text-[#666] font-medium hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="flex-1 py-3 px-4 bg-[#006ff6] text-white rounded-[4px] font-medium hover:bg-[#0056d6]"
+              >
+                确认
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
