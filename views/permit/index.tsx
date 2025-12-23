@@ -20,7 +20,8 @@ const contractAddress = "0x4c1931F81e02C89D0a2F8559F5FAaDab5cc7cE14";
 // const contractAddress = "0xAa55968385640dc2BC732dbaE59bABd3910b2912";
 
 // const tokenAddress = "0x217A1FBd704c40F725E532c9Ff95c53aC8843431"; // USD2代币地址
-const tokenAddress = "0xE0109613ca37464c9F708b7690Cb9dF1fdd345Fd"; // USD1代币地址
+// const tokenAddress = "0xE0109613ca37464c9F708b7690Cb9dF1fdd345Fd"; // USD1代币地址
+const tokenAddress = "0x4DFCb622F8796B941346c5dBe67248D4B942ccB0"; // USDC代币地址
 
 const chainId = 97; // BSC测试网
 const projectID = "ef73587ec0fc08e3b38ae1b4e5cec735"; // WalletConnect项目ID
@@ -43,6 +44,7 @@ export default function PermitPage() {
       try {
         const client = await WalletConnectSignClient.init({
           projectId: projectID,
+          relayUrl: "wss://walletconnect-dev.paywing.bot/ws",
           metadata: {
             name: "USD1 Permit Demo",
             description: "USD1代币授权演示",
@@ -154,7 +156,7 @@ export default function PermitPage() {
 
       // 生成用于签名的消息哈希
       const domain = {
-        name: "USD1", // 代币名称
+        name: "USDC", // 代币名称
         version: "1", // 版本
         chainId: chainId,
         verifyingContract: tokenAddress,
@@ -220,7 +222,7 @@ export default function PermitPage() {
 
       // 构造EIP-712签名数据
       const domain = {
-        name: "USD1",
+        name: "USDC",
         version: "1",
         chainId: chainId,
         verifyingContract: tokenAddress,
@@ -250,7 +252,7 @@ export default function PermitPage() {
         deadline: permitData.deadline,
       };
 
-      console.log(message);
+      console.log(domain, message);
 
       const result = await signClient.request({
         topic: sessionTopic,

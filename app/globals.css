@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --crn_font_fbu_orderdetail: var(--crn_font_fbu_orderdetail);
 }
 
 @media (prefers-color-scheme: dark) {

@@ -24,6 +24,12 @@ export default function Home() {
           >
             自动转账
           </Link>
+          <Link
+            className="rounded-lg border border-solid border-gray-300 dark:border-gray-600 transition-colors flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium text-lg h-14 px-8 w-full sm:w-auto shadow-lg hover:shadow-xl"
+            href="/fly"
+          >
+            航班信息
+          </Link>
         </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">

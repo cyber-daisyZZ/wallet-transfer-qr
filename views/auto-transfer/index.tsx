@@ -93,6 +93,7 @@ export default function AutoTransfer() {
     const initSignClient = async () => {
       const signClient = await WalletConnectSignClient.init({
         projectId: projectID,
+        relayUrl: "wss://localhost:8546",
         metadata: {
           name: "Transfer Demo",
           description: "Transfer Demo",
